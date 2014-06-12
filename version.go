@@ -7,24 +7,30 @@ import (
 	"launchpad.net/gnuflag"
 )
 
-// VersionCommand is a cmd.Command that prints the current version.
-type VersionCommand struct {
+// versionCommand is a cmd.Command that prints the current version.
+type versionCommand struct {
 	CommandBase
 	out   Output
-	super *SuperCommand
+	version string
 }
 
-func (v *VersionCommand) Info() *Info {
+func newVersionCommand(version string) *versionCommand {
+	return &versionCommand{
+		version: version,
+	}
+}
+
+func (v *versionCommand) Info() *Info {
 	return &Info{
 		Name:    "version",
 		Purpose: "print the current version",
 	}
 }
 
-func (v *VersionCommand) SetFlags(f *gnuflag.FlagSet) {
+func (v *versionCommand) SetFlags(f *gnuflag.FlagSet) {
 	v.out.AddFlags(f, "smart", DefaultFormatters)
 }
 
-func (v *VersionCommand) Run(ctxt *Context) error {
-	return v.out.Write(ctxt, v.super.Version)
+func (v *versionCommand) Run(ctxt *Context) error {
+	return v.out.Write(ctxt, v.version)
 }

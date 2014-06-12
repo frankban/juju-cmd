@@ -69,7 +69,7 @@ func NewSuperCommand(params SuperCommandParams) *SuperCommand {
 		usagePrefix:     params.UsagePrefix,
 		missingCallback: params.MissingCallback,
 		Aliases:         params.Aliases,
-		Version:         params.Version,
+		version:         params.Version,
 		notifyRun: params.NotifyRun,
 	}
 	command.init()
@@ -87,7 +87,7 @@ type SuperCommand struct {
 	Doc             string
 	Log             *Log
 	Aliases         []string
-	Version         string
+	version         string
 	usagePrefix     string
 	subcmds         map[string]Command
 	commonflags     *gnuflag.FlagSet
@@ -105,8 +105,6 @@ func (c *SuperCommand) IsSuperCommand() bool {
 	return true
 }
 
-// Because Go doesn't have constructors that initialize the object into a
-// ready state.
 func (c *SuperCommand) init() {
 	if c.subcmds != nil {
 		return
@@ -115,12 +113,9 @@ func (c *SuperCommand) init() {
 		super: c,
 	}
 	help.init()
-	version := &VersionCommand{
-		super: c,
-	}
-	c.subcmds = map[string]Command{
-		"help":    help,
-		"version": version,
+	c.subcmds = map[string]Command{"help": help}
+	if c.version != "" {
+		c.subcmds["version"] = newVersionCommand(c.version)
 	}
 }
 
@@ -464,7 +459,7 @@ func (c *helpCommand) Init(args []string) error {
 
 func (c *helpCommand) Run(ctx *Context) error {
 	if c.super.showVersion {
-		v := &VersionCommand{super: c.super}
+		v := newVersionCommand(c.super.version)
 		v.SetFlags(c.super.flags)
 		v.Init(nil)
 		return v.Run(ctx)

@@ -136,9 +136,9 @@ func (s *SuperCommandSuite) TestVersionFlag(c *gc.C) {
 		Name:    "jujutest",
 		Purpose: "to be purposeful",
 		Doc:     "doc\nblah\ndoc",
+		Version: "111.222.333",
 	})
 	testVersionFlagCommand := &testVersionFlagCommand{}
-	jc.Register(&cmd.VersionCommand{})
 	jc.Register(testVersionFlagCommand)
 
 	var stdout, stderr bytes.Buffer
