@@ -173,6 +173,31 @@ func (s *SuperCommandSuite) TestVersionFlag(c *gc.C) {
 	c.Assert(testVersionFlagCommand.version, gc.Equals, "abc.123")
 }
 
+func (s *SuperCommandSuite) TestVersionNotProvided(c *gc.C) {
+	jc := cmd.NewSuperCommand(cmd.SuperCommandParams{
+		Name:    "jujutest",
+		Purpose: "to be purposeful",
+		Doc:     "doc\nblah\ndoc",
+	})
+	var stdout, stderr bytes.Buffer
+	ctx := &cmd.Context{
+		Stdout: &stdout,
+		Stderr: &stderr,
+	}
+
+	// juju version
+	baselineCode := cmd.Main(jc, ctx, []string{"version"})
+	c.Check(baselineCode, gc.Not(gc.Equals), 0)
+	c.Assert(stderr.String(), gc.Equals, "error: unrecognized command: jujutest version\n")
+	stderr.Reset()
+	stdout.Reset()
+
+	// juju --version
+	code := cmd.Main(jc, ctx, []string{"--version"})
+	c.Check(code, gc.Equals, baselineCode)
+	c.Assert(stderr.String(), gc.Equals, "error: flag provided but not defined: --version\n")
+}
+
 func (s *SuperCommandSuite) TestLogging(c *gc.C) {
 	s.PatchValue(&version.Current, version.MustParseBinary("1.2.3.4-plan9-mips"))
 	s.PatchValue(&version.Compiler, "llgo")
