@@ -43,7 +43,7 @@ type SuperCommandParams struct {
 	// actually a subcommand of some other SuperCommand;
 	// it causes the name of the command be logged with
 	// the given prefix.
-	UsagePrefix     string
+	UsagePrefix string
 
 	// Notify, if not nil, is called when the SuperCommand
 	// is about to run a sub-command.
@@ -70,7 +70,7 @@ func NewSuperCommand(params SuperCommandParams) *SuperCommand {
 		missingCallback: params.MissingCallback,
 		Aliases:         params.Aliases,
 		version:         params.Version,
-		notifyRun: params.NotifyRun,
+		notifyRun:       params.NotifyRun,
 	}
 	command.init()
 	return command
@@ -97,7 +97,7 @@ type SuperCommand struct {
 	showDescription bool
 	showVersion     bool
 	missingCallback MissingCallback
-	notifyRun func(string)
+	notifyRun       func(string)
 }
 
 // IsSuperCommand implements Command.IsSuperCommand
@@ -233,8 +233,10 @@ func (c *SuperCommand) SetFlags(f *gnuflag.FlagSet) {
 	c.SetCommonFlags(f)
 	// Only flags set by SetCommonFlags are passed on to subcommands.
 	// Any flags added below only take effect when no subcommand is
-	// specified (e.g. juju --version).
-	f.BoolVar(&c.showVersion, "version", false, "Show the version of juju")
+	// specified (e.g. command --version).
+	if c.version != "" {
+		f.BoolVar(&c.showVersion, "version", false, "Show the command's version and exit")
+	}
 	c.flags = f
 }
 
