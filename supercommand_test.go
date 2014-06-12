@@ -12,8 +12,8 @@ import (
 	"launchpad.net/gnuflag"
 	gc "launchpad.net/gocheck"
 
-	"github.com/juju/juju/cmd"
-	"github.com/juju/juju/testing"
+	"github.com/juju/cmd"
+	"github.com/juju/cmd/cmdtesting"
 	"github.com/juju/juju/version"
 )
 
@@ -21,7 +21,7 @@ func initDefenestrate(args []string) (*cmd.SuperCommand, *TestCommand, error) {
 	jc := cmd.NewSuperCommand(cmd.SuperCommandParams{Name: "jujutest"})
 	tc := &TestCommand{Name: "defenestrate"}
 	jc.Register(tc)
-	return jc, tc, testing.InitCommand(jc, args)
+	return jc, tc, cmdtesting.InitCommand(jc, args)
 }
 
 type SuperCommandSuite struct {
@@ -205,7 +205,7 @@ func (s *SuperCommandSuite) TestLogging(c *gc.C) {
 			Log:         &cmd.Log{},
 		})
 		jc.Register(&TestCommand{Name: "blah"})
-		ctx := testing.Context(c)
+		ctx := cmdtesting.Context(c)
 		code := cmd.Main(jc, ctx, []string{"blah", "--option", "error", "--debug"})
 		c.Assert(code, gc.Equals, 1)
 		c.Assert(bufferString(ctx.Stderr), gc.Matches, test.pattern)
@@ -215,7 +215,7 @@ func (s *SuperCommandSuite) TestLogging(c *gc.C) {
 func (s *SuperCommandSuite) TestDescription(c *gc.C) {
 	jc := cmd.NewSuperCommand(cmd.SuperCommandParams{Name: "jujutest", Purpose: "blow up the death star"})
 	jc.Register(&TestCommand{Name: "blah"})
-	ctx := testing.Context(c)
+	ctx := cmdtesting.Context(c)
 	code := cmd.Main(jc, ctx, []string{"blah", "--description"})
 	c.Assert(code, gc.Equals, 0)
 	c.Assert(bufferString(ctx.Stdout), gc.Equals, "blow up the death star\n")
@@ -224,7 +224,7 @@ func (s *SuperCommandSuite) TestDescription(c *gc.C) {
 func (s *SuperCommandSuite) TestHelp(c *gc.C) {
 	jc := cmd.NewSuperCommand(cmd.SuperCommandParams{Name: "jujutest"})
 	jc.Register(&TestCommand{Name: "blah"})
-	ctx := testing.Context(c)
+	ctx := cmdtesting.Context(c)
 	code := cmd.Main(jc, ctx, []string{"blah", "--help"})
 	c.Assert(code, gc.Equals, 0)
 	stripped := strings.Replace(bufferString(ctx.Stdout), "\n", "", -1)
@@ -234,7 +234,7 @@ func (s *SuperCommandSuite) TestHelp(c *gc.C) {
 func (s *SuperCommandSuite) TestHelpWithPrefix(c *gc.C) {
 	jc := cmd.NewSuperCommand(cmd.SuperCommandParams{Name: "jujutest", UsagePrefix: "juju"})
 	jc.Register(&TestCommand{Name: "blah"})
-	ctx := testing.Context(c)
+	ctx := cmdtesting.Context(c)
 	code := cmd.Main(jc, ctx, []string{"blah", "--help"})
 	c.Assert(code, gc.Equals, 0)
 	stripped := strings.Replace(bufferString(ctx.Stdout), "\n", "", -1)
@@ -261,7 +261,7 @@ func (s *SuperCommandSuite) TestMissingCallback(c *gc.C) {
 
 	code := cmd.Main(
 		NewSuperWithCallback(callback),
-		testing.Context(c),
+		cmdtesting.Context(c),
 		[]string{"foo", "bar", "baz", "--debug"})
 	c.Assert(code, gc.Equals, 0)
 	c.Assert(calledName, gc.Equals, "foo")
@@ -273,11 +273,11 @@ func (s *SuperCommandSuite) TestMissingCallbackErrors(c *gc.C) {
 		return fmt.Errorf("command not found %q", subcommand)
 	}
 
-	ctx := testing.Context(c)
+	ctx := cmdtesting.Context(c)
 	code := cmd.Main(NewSuperWithCallback(callback), ctx, []string{"foo"})
 	c.Assert(code, gc.Equals, 1)
-	c.Assert(testing.Stdout(ctx), gc.Equals, "")
-	c.Assert(testing.Stderr(ctx), gc.Equals, "ERROR command not found \"foo\"\n")
+	c.Assert(cmdtesting.Stdout(ctx), gc.Equals, "")
+	c.Assert(cmdtesting.Stderr(ctx), gc.Equals, "ERROR command not found \"foo\"\n")
 }
 
 func (s *SuperCommandSuite) TestMissingCallbackContextWiredIn(c *gc.C) {
@@ -287,11 +287,11 @@ func (s *SuperCommandSuite) TestMissingCallbackContextWiredIn(c *gc.C) {
 		return nil
 	}
 
-	ctx := testing.Context(c)
+	ctx := cmdtesting.Context(c)
 	code := cmd.Main(NewSuperWithCallback(callback), ctx, []string{"foo", "bar", "baz", "--debug"})
 	c.Assert(code, gc.Equals, 0)
-	c.Assert(testing.Stdout(ctx), gc.Equals, "this is std out")
-	c.Assert(testing.Stderr(ctx), gc.Equals, "this is std err")
+	c.Assert(cmdtesting.Stdout(ctx), gc.Equals, "this is std out")
+	c.Assert(cmdtesting.Stderr(ctx), gc.Equals, "this is std err")
 }
 
 func (s *SuperCommandSuite) TestSupercommandAliases(c *gc.C) {
@@ -309,7 +309,7 @@ func (s *SuperCommandSuite) TestSupercommandAliases(c *gc.C) {
 	jc.Register(sub)
 	for _, name := range []string{"jubar", "jubaz", "jubing"} {
 		c.Logf("testing command name %q", name)
-		ctx := testing.Context(c)
+		ctx := cmdtesting.Context(c)
 		code := cmd.Main(jc, ctx, []string{name, "--help"})
 		c.Assert(code, gc.Equals, 0)
 		stripped := strings.Replace(bufferString(ctx.Stdout), "\n", "", -1)

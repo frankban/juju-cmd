@@ -12,8 +12,6 @@ import (
 
 	"github.com/juju/loggo"
 	"launchpad.net/gnuflag"
-
-	"github.com/juju/juju/version"
 )
 
 var logger = loggo.GetLogger("juju.cmd")
@@ -41,13 +39,23 @@ type MissingCallback func(ctx *Context, subcommand string, args []string) error
 // SuperCommandParams provides a way to have default parameter to the
 // `NewSuperCommand` call.
 type SuperCommandParams struct {
+	// UsagePrefix should be set when the SuperCommand is
+	// actually a subcommand of some other SuperCommand;
+	// it causes the name of the command be logged with
+	// the given prefix.
 	UsagePrefix     string
+
+	// Notify, if not nil, is called when the SuperCommand
+	// is about to run a sub-command.
+	NotifyRun func(cmdName string)
+
 	Name            string
 	Purpose         string
 	Doc             string
 	Log             *Log
 	MissingCallback MissingCallback
 	Aliases         []string
+	Version         string
 }
 
 // NewSuperCommand creates and initializes a new `SuperCommand`, and returns
@@ -61,6 +69,8 @@ func NewSuperCommand(params SuperCommandParams) *SuperCommand {
 		usagePrefix:     params.UsagePrefix,
 		missingCallback: params.MissingCallback,
 		Aliases:         params.Aliases,
+		Version:         params.Version,
+		notifyRun: params.NotifyRun,
 	}
 	command.init()
 	return command
@@ -77,6 +87,7 @@ type SuperCommand struct {
 	Doc             string
 	Log             *Log
 	Aliases         []string
+	Version         string
 	usagePrefix     string
 	subcmds         map[string]Command
 	commonflags     *gnuflag.FlagSet
@@ -86,6 +97,7 @@ type SuperCommand struct {
 	showDescription bool
 	showVersion     bool
 	missingCallback MissingCallback
+	notifyRun func(string)
 }
 
 // IsSuperCommand implements Command.IsSuperCommand
@@ -103,8 +115,12 @@ func (c *SuperCommand) init() {
 		super: c,
 	}
 	help.init()
+	version := &VersionCommand{
+		super: c,
+	}
 	c.subcmds = map[string]Command{
-		"help": help,
+		"help":    help,
+		"version": version,
 	}
 }
 
@@ -298,10 +314,12 @@ func (c *SuperCommand) Run(ctx *Context) error {
 			return err
 		}
 	}
-	if c.usagePrefix == "" || c.usagePrefix == c.Name {
-		logger.Infof("running %s [%s %s]", c.Name, version.Current, version.Compiler)
-	} else {
-		logger.Infof("running %s %s [%s %s]", c.usagePrefix, c.Name, version.Current, version.Compiler)
+	if c.notifyRun != nil {
+		name := c.Name
+		if c.usagePrefix != "" {
+			name = c.usagePrefix + " " + name
+		}
+		c.notifyRun(name)
 	}
 	err := c.subcmd.Run(ctx)
 	if err != nil && err != ErrSilent {
@@ -446,7 +464,7 @@ func (c *helpCommand) Init(args []string) error {
 
 func (c *helpCommand) Run(ctx *Context) error {
 	if c.super.showVersion {
-		var v VersionCommand
+		v := &VersionCommand{super: c.super}
 		v.SetFlags(c.super.flags)
 		v.Init(nil)
 		return v.Run(ctx)

@@ -1,7 +1,7 @@
 // Copyright 2013 Canonical Ltd.
 // Licensed under the AGPLv3, see LICENCE file for details.
 
-package testing
+package cmdtesting
 
 import (
 	"bytes"
@@ -10,7 +10,7 @@ import (
 	"launchpad.net/gnuflag"
 	gc "launchpad.net/gocheck"
 
-	"github.com/juju/juju/cmd"
+	"github.com/juju/cmd"
 )
 
 // NewFlagSet creates a new flag set using the standard options, particularly

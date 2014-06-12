@@ -5,14 +5,13 @@ package cmd
 
 import (
 	"launchpad.net/gnuflag"
-
-	"github.com/juju/juju/version"
 )
 
 // VersionCommand is a cmd.Command that prints the current version.
 type VersionCommand struct {
 	CommandBase
-	out Output
+	out   Output
+	super *SuperCommand
 }
 
 func (v *VersionCommand) Info() *Info {
@@ -27,5 +26,5 @@ func (v *VersionCommand) SetFlags(f *gnuflag.FlagSet) {
 }
 
 func (v *VersionCommand) Run(ctxt *Context) error {
-	return v.out.Write(ctxt, version.Current.String())
+	return v.out.Write(ctxt, v.super.Version)
 }
